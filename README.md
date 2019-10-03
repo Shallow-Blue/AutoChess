@@ -32,6 +32,21 @@ After instalation, you will need to clone the repository in Github to your compu
 - Be able to implement speech recognition for moving the pieces.
 - Upgrade the interactive requirements from the B requirements.
 
+### Electromagnets
+At first we thought of creating our own electromagnets (see image bellow), but we realized that it would take more effort than needed, so we opted to use a 12V/ 3W electromagnet *off-the-shelf* (see image bellow). After some tests in 26/09 with the chosen electromagnet, we saw that some especifications must be attended for the proper operation of the system. Such as:
+- The electromagnet must be at least 6mm of the piece.
+- The board must be smooth so the piece doesn't suffer friction with it.
+- The electromagnet must have some kind of cooling system, for it can overheat, and can create problems with the system as a whole, and also create a fire hazard.
+
+
+| ![Old DIY Electromagnet](resources/old_em.jpg) |
+|:--:|
+|*Created Electromagnet*|
+
+| ![Off-the-shelf magnet](resources/new_em.jpg) |
+|:--:|
+|*Off-the-shelf magnet*|
+
 ## Git Basics
 Git is a distributed version control and source code management system.
 
