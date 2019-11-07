@@ -1,18 +1,29 @@
+#include <LiquidCrystal.h>
+
 #include <AccelStepper.h>
 #include <MultiStepper.h>
 
-
-
 // PINOUT
 #define EN_X 10
+#define STEP_X 7
+#define DIR_X 4
 #define EN_Y 11
-#define STEP 7
-#define DIR 4
+#define STEP_Y 8
+#define DIR_Y 5
+
 #define MIN_X_PIN 9
 #define MIN_Y_PIN 8
 #define MAX_X_PIN 6
 #define MAX_Y_PIN 5
 #define MAGNET_PIN 0
+
+#define LCD_RS 20
+#define LCD_RW 21
+#define LCD_EN 22
+#define LCD_D4 23
+#define LCD_D5 24
+#define LCD_D6 25
+#define LCD_D7 26
 
 //CONFIG
 #define STATES_DIF 40
@@ -24,17 +35,17 @@ int max_y_step = 0;
 long x_array[19] = {0};
 long y_array [17] = {0};
 String cmd_input;
-int chosen_position = 0;
 int X1,X2,Y1,Y2;
 
-
-
-AccelStepper motorX(1, 7, 4 );
-AccelStepper motorY(2, 8, 5 );
+AccelStepper motorX(1, STEP_X, DIR_X );
+AccelStepper motorY(1, STEP_Y, DIR_Y );
+LiquidCrystal lcd(LCD_RS, LCD_RW, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
 void setup()
 {
   Serial.begin(9600);
+  lcd.begin(16,2);
+  lcd.print("Initializing...");
   pinMode(EN_X, OUTPUT);
   pinMode(EN_Y, OUTPUT);
   pinMode(MIN_X_PIN, INPUT);
@@ -48,6 +59,9 @@ void setup()
   motorY.setSpeed(MOTOR_SPEED);
   motorY.setAcceleration(MOTOR_ACC);
   calibration();
+  lcd.clear();
+  lcd.print("Welcome to AutoChess");
+  
   /* ***************************
    * ********COMMANDS***********
    * ***************************
@@ -57,6 +71,7 @@ void setup()
    * ||AT+CALIB              |  Calibrate the board
    * 
    */
+   
   Serial.println("Type a command");
   
 }
