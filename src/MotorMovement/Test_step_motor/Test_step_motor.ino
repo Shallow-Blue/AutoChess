@@ -4,18 +4,20 @@
 #include <MultiStepper.h>
 
 // PINOUT
-#define EN_X 10
-#define STEP_X 7
-#define DIR_X 4
-#define EN_Y 11
-#define STEP_Y 8
+#define EN_X 0
+#define STEP_X 1
+#define DIR_X 2
+
+#define EN_Y 3
+#define STEP_Y 4
 #define DIR_Y 5
 
-#define MIN_X_PIN 9
-#define MIN_Y_PIN 8
-#define MAX_X_PIN 6
-#define MAX_Y_PIN 5
-#define MAGNET_PIN 0
+#define MIN_X_PIN 6
+#define MIN_Y_PIN 7
+#define MAX_X_PIN 8
+#define MAX_Y_PIN 9
+
+#define MAGNET_PIN 10
 
 #define LCD_RS 20
 #define LCD_RW 21
@@ -25,10 +27,19 @@
 #define LCD_D6 25
 #define LCD_D7 26
 
+#define CONFIG_BUT 11
+
+#define BUZ 12
+
+#define POT A0
+
 //CONFIG
 #define STATES_DIF 40
 #define MOTOR_SPEED 250
 #define MOTOR_ACC 100
+#define MAX_STEP_X 100000
+#define MAX_STEP_Y 100000
+#define SLEEP_TIME 20000 //in ms
 
 int max_x_step = 0;
 int max_y_step = 0;
@@ -36,21 +47,42 @@ long x_array[19] = {0};
 long y_array [17] = {0};
 String cmd_input;
 int X1,X2,Y1,Y2;
+unsigned long configButPress;
 
 AccelStepper motorX(1, STEP_X, DIR_X );
 AccelStepper motorY(1, STEP_Y, DIR_Y );
 LiquidCrystal lcd(LCD_RS, LCD_RW, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
-
+  
+  
+  
+  
+  /* ***************************
+   * ********COMMANDS***********
+   * ***************************
+   * ||AT+OK                 |  Check communication (Will reply OK)
+   * ||AT+GOTO(X1,Y1,X1,Y2)  |  Bring a piece from the position (X1,Y1) to (X2,Y2) where, either X1 and X2 are equal or Y1 and Y2 are. 
+   *                            Where X1,X2 are numbers between 1 and 19 and Y1 and Y2 are between 1 and 17.
+   * ||AT+CALIB              |  Calibrate the board
+   * ||AT+WIN
+   * ||AT+LOSE
+   * ||AT+ILEGALMOVE
+   * ||AT+MISSPIEC
+   * ****************************
+   * 
+   */
 void setup()
 {
   Serial.begin(9600);
   lcd.begin(16,2);
   lcd.print("Initializing...");
+  
   pinMode(EN_X, OUTPUT);
   pinMode(EN_Y, OUTPUT);
   pinMode(MIN_X_PIN, INPUT);
-  pinMode(MAX_X_PIN, INPUT);
+  pinMode(MIN_Y_PIN, INPUT);
   pinMode(MAGNET_PIN, OUTPUT);
+  pinMode (CONFIG_BUT, INPUT);
+  
   digitalWrite(MAGNET_PIN, LOW);
   motorX.setMaxSpeed(MOTOR_SPEED);
   motorX.setSpeed(MOTOR_SPEED);
@@ -60,24 +92,57 @@ void setup()
   motorY.setAcceleration(MOTOR_ACC);
   calibration();
   lcd.clear();
-  lcd.print("Welcome to AutoChess");
-  
-  /* ***************************
-   * ********COMMANDS***********
-   * ***************************
-   * ||AT+OK                 |  Check communication (Will reply OK)
-   * ||AT+GOTO(X1,Y1,X1,Y2)  |  Bring a piece from the position (X1,Y1) to (X2,Y2) where, either X1 and X2 are equal or Y1 and Y2 are. 
-   *                            Where X1,X2 are numbers between 1 and 19 and Y1 and Y2 are between 1 and 17.
-   * ||AT+CALIB              |  Calibrate the board
-   * 
-   */
+  lcd.print("---AutoChess---");
+  lcd.setCursor(0,1);
+  lcd.print("Press the button");
+  while (digitalRead(CONFIG_BUT)==LOW);
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print ("Pick your pieces");
+  lcd.setCursor(0,1);
+  lcd.print("W   or   B");
+  delay(500);
+  lcd.setCursor(0,1);
+  lcd.cursor();
+  while (digitalRead(CONFIG_BUT)==LOW){
+    if (analogRead(POT)<512){
+      lcd.setCursor(0,1);
+    }
+    else{
+      lcd.setCursor(9,1);
+    }
+  }
+  if (analogRead(POT)<512){
+    Serial.println("AT+SELECT(W)");
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print ("White selected");
+    delay (1000);
+  }
+  else{
+    Serial.println("AT+SELECT(B)");
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print ("Black selected");
+    delay(1000);
+  }
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print ("Press the button");
+  lcd.setCursor(0,1);
+  lcd.print ("to start");
+  while (digitalRead(CONFIG_BUT)==LOW);
+
    
-  Serial.println("Type a command");
+  Serial.println("AT+START");
   
 }
 
 void loop()
 {
+  if (CONFIG_BUT == HIGH){
+    configButPress = millis();
+  }
   if (Serial.available() > 0)
   {
     cmd_input = Serial.readString();
@@ -127,7 +192,20 @@ void loop()
         Serial.println("OK");
       }
       if (cmd_input.startsWith("CALIB")){
+      
         calibration();
+      }
+      if (cmd_input.startsWith("WIN")){
+        winSound();
+      }
+      if (cmd_input.startsWith("LOSE")){
+        loseSound();
+      }
+      if (cmd_input.startsWith("ILLEGAL")){
+        illegalMove();
+      }
+      if (cmd_input.startsWith("MISSPIEC")){
+        missingPiece();
       }
     }
     else{
@@ -146,7 +224,12 @@ void loop()
   else{
     digitalWrite(EN_Y, HIGH);
   }
-
+  if ((millis() - configButPress)< SLEEP_TIME){
+    
+  }
+  else{
+    lcd.clear();
+  }
 }
 void calibration() {
   Serial.println("Calibrating...");
@@ -156,27 +239,17 @@ void calibration() {
   }
   motorX.setCurrentPosition(0);
   Serial.println("Minimum range reached");
-  while (digitalRead(MAX_X_PIN) == LOW) {
-    motorX.move(1000);
-    motorX.run();
-  }
-  max_x_step = motorX.currentPosition();
-  Serial.print("Maximum range reached: ");
-  Serial.println(max_x_step);
-  
+
+  max_x_step = MAX_STEP_X;
+
   while (digitalRead(MIN_Y_PIN) == LOW) {
     motorY.move(-10000);
     motorY.run();
   }
   motorY.setCurrentPosition(0);
-  Serial.println("Minimum range reached");
-  while (digitalRead(MAX_Y_PIN) == LOW) {
-    motorY.move(1000);
-    motorY.run();
-  }
-  max_y_step = motorY.currentPosition();
-  Serial.print("Maximum range reached: ");
-  Serial.println(max_y_step);
+
+  max_y_step = MAX_STEP_Y;
+
 
   digitalWrite(EN_Y, HIGH);
   digitalWrite(EN_X, HIGH);
@@ -191,5 +264,72 @@ void calibration() {
     y_array[i]=y_array[i-1]+STATES_DIF;
   }
   
+  return;
+}
+
+void winSound(){
+  tone(BUZ, 523.25,133);
+  delay(133);
+  tone(BUZ, 523.25,133);
+  delay(133);
+  tone(BUZ, 523.25,133);
+  delay(133);
+  tone(BUZ, 523.25,133);
+  delay(133);
+  tone(BUZ, 415.30,133);
+  delay(133);
+  tone(BUZ, 466.16,133);
+  delay(133);
+  tone(BUZ, 523.25,133);
+  delay(133);
+  tone(BUZ, 466.16,133);
+  delay(133);
+  tone(BUZ, 523.25,133);
+  delay(133);
+
+  return;
+}
+void loseSound(){
+  // G 391.995
+  // A# 466.16
+  // A 440
+  // F# 369.99
+  tone(BUZ, 391.995,133);
+  delay(133);
+  tone(BUZ, 391.995,133);
+  delay(133);
+  tone(BUZ, 391.995,133);
+  delay(133);
+  tone(BUZ, 466.16,133);
+  delay(133);
+  tone(BUZ, 440,133);
+  delay(133);
+  tone(BUZ, 440,133);
+  delay(133);
+  tone(BUZ, 391.995,133);
+  delay(133);
+  tone(BUZ, 391.995,133);
+  delay(133);
+  tone(BUZ, 369.99,133);
+  delay(133);
+  tone(BUZ, 391.995,133);
+  delay(133);
+  return;
+}
+void illegalMove(){
+  lcd.setCursor(0, 1);
+  lcd.print("Illegal Move!");
+  tone(BUZ,440,250);
+  tone(BUZ,440,250);
+  lcd.setCursor(0,0);
+  return;
+}
+void missingPiece(){
+  lcd.setCursor(0, 1);
+  lcd.print("Missing Pieces");
+  tone(BUZ,550,250);
+  tone(BUZ,550,250);
+  tone(BUZ,550,250);
+  lcd.setCursor(0,0);
   return;
 }
