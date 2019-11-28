@@ -60,7 +60,7 @@ LiquidCrystal lcd(LCD_RS, LCD_RW, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
    * ********COMMANDS***********
    * ***************************
    * ||AT+OK                 |  Check communication (Will reply OK)
-   * ||AT+GOTO(X1,Y1,X1,Y2)  |  Bring a piece from the position (X1,Y1) to (X2,Y2) where, either X1 and X2 are equal or Y1 and Y2 are. 
+   * ||AT+GOTO(X1,Y1,X2,Y2)  |  Bring a piece from the position (X1,Y1) to (X2,Y2) where, either X1 and X2 are equal or Y1 and Y2 are. 
    *                            Where X1,X2 are numbers between 1 and 19 and Y1 and Y2 are between 1 and 17.
    * ||AT+CALIB              |  Calibrate the board
    * ||AT+WIN
