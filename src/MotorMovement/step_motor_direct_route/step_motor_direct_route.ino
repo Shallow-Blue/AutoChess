@@ -41,6 +41,8 @@
 #define MAX_STEP_Y 100000
 #define SLEEP_TIME 20000 //in ms
 
+#define VERBOSE
+
 int max_x_step = 0;
 int max_y_step = 0;
 long x_array[8] = {0};
@@ -73,9 +75,15 @@ LiquidCrystal lcd(LCD_RS, LCD_RW, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 void setup()
 {
   Serial.begin(9600);
+  #ifdef VERBOSE
+  Serial.println("Initializing LCD");
+  #endif
   lcd.begin(16,2);
   lcd.print("Initializing...");
-  
+
+  #ifdef VERBOSE
+  Serial.println("Initializing pins");
+  #endif
   pinMode(EN_X, OUTPUT);
   pinMode(EN_Y, OUTPUT);
   pinMode(MIN_X_PIN, INPUT);
@@ -84,17 +92,30 @@ void setup()
   pinMode (CONFIG_BUT, INPUT);
   
   digitalWrite(MAGNET_PIN, LOW);
+  #ifdef VERBOSE
+  Serial.println("Setting motor X");
+  #endif
   motorX.setMaxSpeed(MOTOR_SPEED);
   motorX.setSpeed(MOTOR_SPEED);
   motorX.setAcceleration(MOTOR_ACC);
+  #ifdef VERBOSE
+  Serial.println("Setting motor Y");
+  #endif
   motorY.setMaxSpeed(MOTOR_SPEED);
   motorY.setSpeed(MOTOR_SPEED);
   motorY.setAcceleration(MOTOR_ACC);
   calibration();
+  
+  #ifdef VERBOSE
+  Serial.println("Start config");
+  #endif
   lcd.clear();
   lcd.print("---AutoChess---");
   lcd.setCursor(0,1);
   lcd.print("Press the button");
+  #ifdef VERBOSE
+  Serial.println("Waiting button press");
+  #endif
   while (digitalRead(CONFIG_BUT)==LOW);
   lcd.clear();
   lcd.setCursor(0,0);
@@ -104,6 +125,9 @@ void setup()
   delay(500);
   lcd.setCursor(0,1);
   lcd.cursor();
+  #ifdef VERBOSE
+  Serial.println("Wating selection");
+  #endif
   while (digitalRead(CONFIG_BUT)==LOW){
     if (analogRead(POT)<512){
       lcd.setCursor(0,1);
@@ -141,6 +165,9 @@ void setup()
 void loop()
 {
   if (CONFIG_BUT == HIGH){
+    #ifdef VERBOSE
+    Serial.println("Button pressed");
+    #endif
     configButPress = millis();
   }
   if (Serial.available() > 0)
@@ -152,24 +179,24 @@ void loop()
         cmd_input.remove (0,5);
         X1 = cmd_input.toInt();
         if (X1>9){
-          cmd_input.remove (0,2);  
+          cmd_input.remove (0,3);  
         }
         else {
-          cmd_input.remove (0,1);
+          cmd_input.remove (0,2);
         }
         Y1 = cmd_input.toInt();
         if (Y1>9){
-          cmd_input.remove (0,2);  
+          cmd_input.remove (0,3);  
         }
         else {
-          cmd_input.remove (0,1);
+          cmd_input.remove (0,2);
         }
         X2 = cmd_input.toInt();
         if (X2>9){
-          cmd_input.remove (0,2);  
+          cmd_input.remove (0,3);  
         }
         else {
-          cmd_input.remove (0,1);
+          cmd_input.remove (0,2);
         }
         Y2 = cmd_input.toInt();
         
@@ -177,23 +204,40 @@ void loop()
         digitalWrite(EN_Y, LOW);
         
         digitalWrite(MAGNET_PIN,LOW);
+        #ifdef VERBOSE
         Serial.print("Starting in X=");
         Serial.print(X1);
         Serial.print("and Y=");
         Serial.println(Y1);
+        #endif
+        
         motorX.moveTo(x_array[X1]);
         motorY.moveTo(y_array[Y1]);
+        #ifdef VERBOSE
+        Serial.println("Moving motor X");
+        #endif
         while (motorX.run())
+        #ifdef VERBOSE
+        Serial.println("Moving motor Y");
+        #endif
         while (motorY.run())
         
         digitalWrite(MAGNET_PIN,HIGH);
+        #ifdef VERBOSE
         Serial.print("Going to X=");
         Serial.print(X2);
         Serial.print("and Y=");
         Serial.println(Y2);
+        #endif
         motorX.moveTo(x_array[X2]);
         motorY.moveTo(y_array[Y2]);
+        #ifdef VERBOSE
+        Serial.println("Moving motor X");
+        #endif
         while (motorX.run())
+        #ifdef VERBOSE
+        Serial.println("Moving motor y");
+        #endif
         while (motorY.run())
         digitalWrite(MAGNET_PIN,LOW);
         digitalWrite(EN_X, HIGH);
@@ -221,9 +265,12 @@ void loop()
       }
     }
     else{
-     // Serial.println ("Invalid command");
+        #ifdef VERBOSE
+        Serial.println("Invalid command");
+        #endif
     }
   } //end of command treatment
+  
   if (motorX.run()){
     digitalWrite(EN_X, LOW);
   }
@@ -242,15 +289,23 @@ void loop()
   else{
     lcd.clear();
   }
+  
 }
+
 void calibration() {
+  #ifdef VERBOSE
   Serial.println("Calibrating...");
+  #endif
+  
   while (digitalRead(MIN_X_PIN) == LOW) {
     motorX.move(-10000);
     motorX.run();
   }
   motorX.setCurrentPosition(0);
-  Serial.println("Minimum range reached");
+  #ifdef VERBOSE
+  Serial.println("Minimum range X reached");
+  #endif
+  
 
   max_x_step = MAX_STEP_X;
 
@@ -280,6 +335,9 @@ void calibration() {
 }
 
 void winSound(){
+  #ifdef VERBOSE
+  Serial.println("Win Sound");
+  #endif
   tone(BUZ, 523.25,133);
   delay(133);
   tone(BUZ, 523.25,133);
@@ -302,6 +360,9 @@ void winSound(){
   return;
 }
 void loseSound(){
+  #ifdef VERBOSE
+  Serial.println("Lose Sound");
+  #endif
   // G 391.995
   // A# 466.16
   // A 440
@@ -329,6 +390,9 @@ void loseSound(){
   return;
 }
 void illegalMove(){
+  #ifdef VERBOSE
+  Serial.println("Ilegal Move detected");
+  #endif
   lcd.setCursor(0, 1);
   lcd.print("Illegal Move!");
   tone(BUZ,440,250);
@@ -337,6 +401,9 @@ void illegalMove(){
   return;
 }
 void missingPiece(){
+  #ifdef VERBOSE
+  Serial.println("Missing piece detected");
+  #endif
   lcd.setCursor(0, 1);
   lcd.print("Missing Pieces");
   tone(BUZ,550,250);
