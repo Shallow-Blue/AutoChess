@@ -5,17 +5,15 @@
 
 // PINOUT
 #define EN_X 0
-#define STEP_X 1
-#define DIR_X 2
+#define STEP_X 5
+#define DIR_X 6
 
-#define EN_Y 3
-#define STEP_Y 4
-#define DIR_Y 5
+#define EN_Y 1
+#define STEP_Y 3
+#define DIR_Y 4
 
-#define MIN_X_PIN 6
-#define MIN_Y_PIN 7
-#define MAX_X_PIN 8
-#define MAX_Y_PIN 9
+#define MIN_X_PIN 9
+#define MIN_Y_PIN 8
 
 #define MAGNET_PIN 10
 
@@ -29,7 +27,7 @@
 
 #define CONFIG_BUT 11
 
-#define BUZ 12
+#define BUZ 20
 
 #define POT A0
 
@@ -105,7 +103,7 @@ void setup()
   motorY.setSpeed(MOTOR_SPEED);
   motorY.setAcceleration(MOTOR_ACC);
   calibration();
-  
+  /*
   #ifdef VERBOSE
   Serial.println("Start config");
   #endif
@@ -157,7 +155,7 @@ void setup()
   lcd.print ("to start");
   while (digitalRead(CONFIG_BUT)==LOW);
 
-   
+   */
   Serial.println("AT+START");
   
 }
@@ -251,10 +249,10 @@ void loop()
       
         calibration();
       }
-      if (cmd_input.startsWith("WIN")){
+      if (cmd_input.startsWith("WWIN")){
         winSound();
       }
-      if (cmd_input.startsWith("LOSE")){
+      if (cmd_input.startsWith("BWIN")){
         loseSound();
       }
       if (cmd_input.startsWith("ILLEGAL")){
