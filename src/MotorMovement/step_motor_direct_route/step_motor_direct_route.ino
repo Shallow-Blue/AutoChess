@@ -32,11 +32,12 @@
 #define POT A0
 
 //CONFIG
+
 #define STATES_DIF 40
 #define MOTOR_SPEED 250
 #define MOTOR_ACC 100
-#define MAX_STEP_X 100000
-#define MAX_STEP_Y 100000
+#define MAX_STEP_X 5000
+#define MAX_STEP_Y 5000
 #define SLEEP_TIME 20000 //in ms
 
 #define VERBOSE
@@ -76,8 +77,8 @@ void setup()
   #ifdef VERBOSE
   Serial.println("Initializing LCD");
   #endif
-  lcd.begin(16,2);
-  lcd.print("Initializing...");
+ // lcd.begin(16,2);
+  //lcd.print("Initializing...");
 
   #ifdef VERBOSE
   Serial.println("Initializing pins");
@@ -318,9 +319,9 @@ void calibration() {
 
   digitalWrite(EN_Y, HIGH);
   digitalWrite(EN_X, HIGH);
-  x_array[9] = max_x_step/2 ;
-  y_array[8] = max_y_step/2 ;
-  x_array[0]= x_array[9] - 9 * STATES_DIF ;
+  x_array[4] = max_x_step/2 ;
+  y_array[4] = max_y_step/2 ;
+  x_array[0]= x_array[8] - 9 * STATES_DIF ;
   y_array[0]= y_array[8] - 9 * STATES_DIF ;
   for (int i=1; i<8;i++){
     x_array[i]=x_array[i-1]+STATES_DIF;
