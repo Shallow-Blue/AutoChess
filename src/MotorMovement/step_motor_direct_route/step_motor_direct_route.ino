@@ -85,8 +85,9 @@ void setup()
   #endif
   pinMode(EN_X, OUTPUT);
   pinMode(EN_Y, OUTPUT);
-  pinMode(MIN_X_PIN, INPUT);
-  pinMode(MIN_Y_PIN, INPUT);
+  pinMode(MIN_X_PIN, INPUT_PULLUP);
+  pinMode(MIN_Y_PIN, INPUT_PULLUP
+         );
   pinMode(MAGNET_PIN, OUTPUT);
   pinMode (CONFIG_BUT, INPUT);
   
@@ -296,7 +297,7 @@ void calibration() {
   Serial.println("Calibrating...");
   #endif
   
-  while (digitalRead(MIN_X_PIN) == LOW) {
+  while (digitalRead(MIN_X_PIN) == HIGH) {
     motorX.move(-10000);
     motorX.run();
   }
@@ -308,7 +309,7 @@ void calibration() {
 
   max_x_step = MAX_STEP_X;
 
-  while (digitalRead(MIN_Y_PIN) == LOW) {
+  while (digitalRead(MIN_Y_PIN) == HIGH) {
     motorY.move(-10000);
     motorY.run();
   }
